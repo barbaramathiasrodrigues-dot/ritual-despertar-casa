@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌅 O Despertar da Casa — Sintonização de Valfenda</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js CDN -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- Firebase Compat (SDK Leve à prova de iframe do Notion) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <!-- Fontes Épicas da Terra Média -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=MedievalSharp&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #090c0a 0%, #121a14 50%, #050806 100%);
+      color: #e2d1b0;
+      font-family: 'MedievalSharp', cursive, serif;
+      min-height: 100vh;
+    }
+    .lotr-title { font-family: 'Cinzel Decorative', serif; }
+    .lotr-sub { font-family: 'Cinzel', serif; }
+    .glass-card {
+      background: rgba(16, 24, 18, 0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85);
+    }
+    .step-done {
+      background: linear-gradient(135deg, rgba(20, 83, 45, 0.6) 0%, rgba(6, 78, 59, 0.8) 100%);
+      border-color: rgba(52, 211, 153, 0.8);
+      color: #a7f3d0;
+    }
+  </style>
+</head>
+<body class="p-3 sm:p-6" x-data="despertarApp()" x-init="initApp()">
+
+  <div class="max-w-xl mx-auto space-y-4">
+
+    <!-- CABEÇALHO DO RITUAL DE DECOLAGEM -->
+    <header class="glass-card rounded-3xl p-5 border border-amber-600/40 relative overflow-hidden text-center space-y-2">
+      <div class="flex justify-between items-center text-[10px] lotr-sub font-bold">
+        <span class="text-amber-500">Casa OS • Organismo Vivo</span>
+        <span x-show="loading" class="text-amber-400 animate-pulse">Sync...</span>
+        <span x-show="!loading" class="text-emerald-400">🟢 Notion Sync</span>
+      </div>
+
+      <h1 class="text-xl md:text-2xl lotr-title font-bold text-amber-400 drop-shadow-md flex items-center justify-center gap-2">
+        🌅 Sintonizar a Casa
+      </h1>
+      <p class="text-xs text-amber-200/70 italic">"A casa não precisa ficar perfeita. Ela só precisa despertar para o próximo ciclo."</p>
+
+      <!-- BARRA DE PROGRESSO DAS 6 ETAPAS -->
+      <div class="pt-2">
+        <div class="flex justify-between text-[10px] lotr-sub font-bold mb-1">
+          <span class="text-amber-200/60" x-text="'Etapa ' + (etapaAtual + 1) + ' de 6: ' + etapas[etapaAtual].titulo"></span>
+          <span class="text-amber-400" x-text="percentual + '%'"></span>
+        </div>
+        <div class="w-full bg-stone-900 rounded-full h-2.5 overflow-hidden p-0.5 border border-amber-800/40">
+          <div class="bg-gradient-to-r from-amber-700 via-amber-500 to-emerald-400 h-full rounded-full transition-all duration-500" :style="'width: ' + percentual + '%'"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ÁREA PRINCIPAL DO PASSO A PASSO (GPS DE SINTONIZAÇÃO) -->
+    <template x-if="!ritualConcluido">
+      <main class="glass-card rounded-3xl p-5 border border-amber-500/40 space-y-4 animate-fade-in">
+        
+        <!-- TOPO DO PASSO ATUAL -->
+        <div class="flex justify-between items-center border-b border-amber-900/40 pb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl" x-text="etapas[etapaAtual].icon"></span>
+            <div>
+              <h2 class="text-sm font-bold text-amber-300 lotr-title" x-text="etapas[etapaAtual].titulo"></h2>
+              <span class="text-[10px] text-amber-200/60 italic" x-text="etapas[etapaAtual].subtitulo"></span>
+            </div>
+          </div>
+          <span class="text-xs font-bold text-amber-400 font-mono" x-text="'⏱️ ' + etapas[etapaAtual].tempo"></span>
+        </div>
+
+        <!-- CONTEÚDO ESPECÍFICO DE CADA ETAPA -->
+        
+        <!-- ETAPA I: REGULAR O CORPO -->
+        <template x-if="etapaAtual === 0">
+          <div class="space-y-2 text-xs">
+            <p class="text-amber-200/80 italic">Marque o que for necessário para garantir que seu corpo consegue cuidar do lar:</p>
+            <template x-for="(item, idx) in checklistCorpo" :key="idx">
+              <div @click="item.done = !item.done" :class="item.done ? 'step-done' : 'bg-stone-950/80 border-amber-900/40 text-amber-100'" class="p-3 rounded-2xl border cursor-pointer flex items-center justify-between transition">
+                <div class="flex items-center gap-2.5">
+                  <span class="text-lg" x-text="item.icon"></span>
+                  <span class="font-bold" x-text="item.label"></span>
+                </div>
+                <span x-text="item.done ? '✔' : '⚪'" class="font-bold"></span>
+              </div>
+            </template>
+          </div>
+        </template>
+
+        <!-- ETAPA II: LER A CASA (CASA SCAN) -->
+        <template x-if="etapaAtual === 1">
+          <div class="space-y-3 text-xs text-center">
+            <p class="text-amber-200/80 italic">"Faça a leitura da infraestrutura sem entrar em modo faxina."</p>
+            
+            <a href="https://barbaramathiasrodrigues-dot.github.io/casa-scan/" target="_blank" class="w-full py-3 bg-gradient-to-r from-teal-900 to-emerald-900 hover:from-teal-800 text-emerald-200 font-bold rounded-2xl border border-teal-500/50 flex items-center justify-center gap-2 transition">
+              <span>📡</span> Abrir Widget Casa Scan (Nova Aba)
+            </a>
+
+            <div class="p-3 bg-black/60 rounded-2xl border border-stone-800 text-left text-[11px] text-amber-200/70 space-y-1">
+              <span class="font-bold text-amber-300 block">Resultado Esperado:</span>
+              <span>Leitura clara da infraestrutura sem estresse ou planejamento pesado.</span>
+            </div>
+          </div>
+        </template>
+
+        <!-- ETAPA III: LER O CONTEXTO -->
+        <template x-if="etapaAtual === 2">
+          <div class="space-y-3 text-xs">
+            <p class="text-amber-200/80 italic">Existe algum evento que muda a prioridade da casa hoje?</p>
+            
+            <div class="grid grid-cols-2 gap-2">
+              <template x-for="evento in eventosContexto" :key="evento.nome">
+                <button @click="evento.ativo = !evento.ativo" :class="evento.ativo ? 'bg-amber-950 border-amber-400 text-amber-200 font-bold' : 'bg-stone-950/80 border-stone-800 text-amber-200/60'" class="p-2.5 rounded-xl border text-left flex items-center gap-2 transition">
+                  <span x-text="evento.icon"></span>
+                  <span x-text="evento.nome"></span>
+                </button>
+              </template>
+            </div>
+          </div>
+        </template>
+
+        <!-- ETAPA IV: AJUSTAR O RITMO -->
+        <template x-if="etapaAtual === 3">
+          <div class="space-y-3 text-xs text-center">
+            <p class="text-amber-200/80 italic">"Como vale a pena executar hoje? (Foco, Regulação ou Alternância)"</p>
+
+            <a href="https://barbaramathiasrodrigues-dot.github.io/alternadorderitmogeral/" target="_blank" class="w-full py-3 bg-gradient-to-r from-amber-900 to-yellow-900 hover:from-amber-800 text-amber-200 font-bold rounded-2xl border border-amber-500/50 flex items-center justify-center gap-2 transition">
+              <span>⚙️</span> Abrir Alternador de Ritmo
+            </a>
+          </div>
+        </template>
+
+        <!-- ETAPA V: ESCOLHER O CICLO -->
+        <template x-if="etapaAtual === 4">
+          <div class="space-y-3 text-xs text-center">
+            <p class="text-amber-200/80 italic">"Qual ciclo merece acontecer agora?"</p>
+
+            <a href="https://barbaramathiasrodrigues-dot.github.io/ritmos-casa/" target="_blank" class="w-full py-3 bg-gradient-to-r from-purple-950 to-indigo-950 hover:from-purple-900 text-purple-200 font-bold rounded-2xl border border-purple-500/50 flex items-center justify-center gap-2 transition">
+              <span>🔮</span> Consultar Ritmos da Casa
+            </a>
+
+            <div class="grid grid-cols-3 gap-2 pt-1 text-[11px]">
+              <button @click="cicloEscolhido = '🍽️ Cozinha'" :class="cicloEscolhido === '🍽️ Cozinha' ? 'bg-amber-600 text-stone-950 font-bold' : 'bg-stone-950/80 text-amber-200/70'" class="p-2 rounded-xl border border-amber-900/40">🍽️ Cozinha</button>
+              <button @click="cicloEscolhido = '🐾 Animais'" :class="cicloEscolhido === '🐾 Animais' ? 'bg-amber-600 text-stone-950 font-bold' : 'bg-stone-950/80 text-amber-200/70'" class="p-2 rounded-xl border border-amber-900/40">🐾 Animais</button>
+              <button @click="cicloEscolhido = '🧺 Roupas'" :class="cicloEscolhido === '🧺 Roupas' ? 'bg-amber-600 text-stone-950 font-bold' : 'bg-stone-950/80 text-amber-200/70'" class="p-2 rounded-xl border border-amber-900/40">🧺 Roupas</button>
+            </div>
+          </div>
+        </template>
+
+        <!-- ETAPA VI: PRIMEIRA FAÍSCA & ESTADO DESEJADO DA CASA -->
+        <template x-if="etapaAtual === 5">
+          <div class="space-y-3 text-xs">
+            <div class="space-y-1">
+              <label class="block font-bold text-amber-300">🔥 Qual a Primeira Faísca (Ação Física Mínima)?</label>
+              <input type="text" x-model="primeiraFaisca" placeholder="Ex: Colocar arroz, ligar máquina, pegar regador..." class="w-full p-3 bg-stone-950 border border-amber-900/60 rounded-xl text-amber-100 focus:outline-none">
+            </div>
+
+            <div class="space-y-1 pt-2 border-t border-amber-900/40">
+              <label class="block font-bold text-emerald-400">🏡 Como você quer que a casa esteja daqui a 30 minutos?</label>
+              <select x-model="estadoDesejado" class="w-full p-3 bg-stone-950 border border-emerald-900/60 rounded-xl text-amber-100 focus:outline-none">
+                <option value="🍽️ Cozinha pronta para a refeição">🍽️ Cozinha pronta para a refeição</option>
+                <option value="🐾 Chão sem acidentes dos cachorrinhos">🐾 Chão limpo sem acidentes dos cachorrinhos</option>
+                <option value="🧺 Roupa lavando na máquina">🧺 Roupa já lavando na máquina</option>
+                <option value="🌿 Sala acolhedora e tranquila para descansar">🌿 Sala acolhedora e tranquila para descansar</option>
+              </select>
+            </div>
+          </div>
+        </template>
+
+        <!-- BOTÕES DE NAVEGAÇÃO ENTRE PASSOS -->
+        <div class="flex justify-between items-center pt-2 border-t border-amber-900/40 text-xs">
+          <button @click="etapaAtual--" x-show="etapaAtual > 0" class="px-4 py-2.5 bg-stone-900 hover:bg-stone-800 text-amber-300 font-bold rounded-xl border border-amber-900/60 transition">
+            ⬅️ Voltar
+          </button>
+
+          <button @click="avancarPasso()" x-show="etapaAtual < 5" class="ml-auto px-5 py-2.5 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-500 text-stone-950 font-black rounded-xl shadow-lg border border-yellow-300/40 uppercase tracking-wider lotr-sub">
+            Avançar Passo ➔
+          </button>
+
+          <button @click="concluirRitual()" x-show="etapaAtual === 5" class="ml-auto px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-stone-950 font-black rounded-xl shadow-lg border border-emerald-300/40 uppercase tracking-wider lotr-sub">
+            ✨ ACENDER O MOTOR DA CASA
+          </button>
+        </div>
+
+      </main>
+    </template>
+
+    <!-- TELA FINAL: CASA DESPERTA -->
+    <template x-if="ritualConcluido">
+      <section class="glass-card rounded-3xl p-6 text-center space-y-4 border border-amber-400/80 bg-amber-950/20 animate-fade-in">
+        <span class="text-5xl block animate-bounce">🏡✨</span>
+        <div class="space-y-1">
+          <h2 class="text-xl lotr-title font-bold text-amber-300">Casa Desperta & Sintonizada!</h2>
+          <p class="text-xs text-amber-200/80 italic">"Você não correu atrás de tarefas. Você preparou o organismo do lar."</p>
+        </div>
+
+        <div class="bg-black/60 p-4 rounded-2xl border border-amber-900/40 text-xs space-y-2 text-left">
+          <div class="flex justify-between"><span class="text-stone-400">Corpo:</span> <span class="text-emerald-400 font-bold">🌿 Regulado</span></div>
+          <div class="flex justify-between"><span class="text-stone-400">Ciclo Escolhido:</span> <span class="text-amber-300 font-bold" x-text="cicloEscolhido"></span></div>
+          <div class="flex justify-between"><span class="text-stone-400">Primeira Faísca:</span> <span class="text-amber-300 font-bold" x-text="primeiraFaisca || 'Realizada'"></span></div>
+          <div class="pt-1 border-t border-stone-800 flex justify-between"><span class="text-emerald-400 font-bold">Meta 30 Min:</span> <span class="text-emerald-300 font-bold" x-text="estadoDesejado"></span></div>
+        </div>
+
+        <button @click="resetRitual()" class="w-full py-3 bg-stone-900 hover:bg-stone-800 text-amber-300 font-bold rounded-xl text-xs transition border border-amber-700/50 lotr-sub">
+          🔄 Sintonizar Novamente para Outro Ciclo
+        </button>
+      </section>
+    </template>
+
+  </div>
+
+  <!-- FIREBASE COMPAT (SDK LEVE) -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBoCzavo5Poj1kjKZbJ9rUwkLQyyjpMgmI",
+      authDomain: "benjamin-express-os.firebaseapp.com",
+      projectId: "benjamin-express-os",
+      storageBucket: "benjamin-express-os.firebasestorage.app",
+      messagingSenderId: "318003877871",
+      appId: "1:318003877871:web:54f4390f54c7710c5cc81a",
+      measurementId: "G-41JWT5ZN72"
+    };
+
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function despertarApp() {
+      return {
+        loading: true,
+        etapaAtual: 0,
+        ritualConcluido: false,
+
+        primeiraFaisca: '',
+        cicloEscolhido: '🍽️ Cozinha',
+        estadoDesejado: '🍽️ Cozinha pronta para a refeição',
+
+        checklistCorpo: [
+          { icon: '☕', label: 'Água ou café por perto', done: false },
+          { icon: '🎧', label: 'Ambiente/som regulado', done: false },
+          { icon: '🌡️', label: 'Luz/janela/temperatura confortáveis', done: false },
+          { icon: '🚻', label: 'Necessidades básicas atendidas', done: false }
+        ],
+
+        eventosContexto: [
+          { icon: '💃', nome: 'Dança / Bachata', ativo: false },
+          { icon: '🧠', nome: 'Terapia / Psiquiatra', ativo: false },
+          { icon: '🏪', nome: 'Operação Loja', ativo: false },
+          { icon: '👨‍👩‍👧', nome: 'Visita na Casa', ativo: false },
+          { icon: '🚗', nome: 'Saída / Rua', ativo: false },
+          { icon: '🌧️', nome: 'Chuva / Clima', ativo: false }
+        ],
+
+        etapas: [
+          { icon: '🌿', titulo: 'ETAPA I — Despertar a Guardiã', subtitulo: 'Regulação do corpo', tempo: '1-2 min' },
+          { icon: '📡', titulo: 'ETAPA II — Ler a Casa', subtitulo: 'Leitura via Casa Scan', tempo: '1 min' },
+          { icon: '🗓️', titulo: 'ETAPA III — Ler o Contexto', subtitulo: 'Eventos que mudam prioridades', tempo: '1 min' },
+          { icon: '⚙️', titulo: 'ETAPA IV — Ajustar o Ritmo', subtitulo: 'Modo de execução', tempo: '1 min' },
+          { icon: '🎯', titulo: 'ETAPA V — Escolher o Ciclo', subtitulo: 'Qual ciclo merece acontecer', tempo: '1 min' },
+          { icon: '🔥', titulo: 'ETAPA VI — Acender o Motor', subtitulo: 'Primeira faísca & visão 30 min', tempo: '1 min' }
+        ],
+
+        get percentual() {
+          return Math.round(((this.etapaAtual + 1) / 6) * 100);
+        },
+
+        async initApp() {
+          const cache = localStorage.getItem('ritual_despertar_casa_backup');
+          if (cache) {
+            try {
+              const parsed = JSON.parse(cache);
+              this.primeiraFaisca = parsed.primeiraFaisca || '';
+              this.cicloEscolhido = parsed.cicloEscolhido || '🍽️ Cozinha';
+              this.estadoDesejado = parsed.estadoDesejado || '🍽️ Cozinha pronta para a refeição';
+            } catch(e) {}
+          }
+
+          db.collection("modo_casa").doc("ritual_despertar_casa").onSnapshot((docSnap) => {
+            if (docSnap.exists) {
+              const data = docSnap.data();
+              if (data.primeiraFaisca) this.primeiraFaisca = data.primeiraFaisca;
+              if (data.cicloEscolhido) this.cicloEscolhido = data.cicloEscolhido;
+              if (data.estadoDesejado) this.estadoDesejado = data.estadoDesejado;
+            }
+            this.loading = false;
+          }, () => { this.loading = false; });
+        },
+
+        avancarPasso() {
+          if (this.etapaAtual < 5) this.etapaAtual++;
+          this.saveState();
+        },
+
+        concluirRitual() {
+          this.ritualConcluido = true;
+          this.saveState();
+        },
+
+        resetRitual() {
+          this.etapaAtual = 0;
+          this.ritualConcluido = false;
+          this.primeiraFaisca = '';
+          this.saveState();
+        },
+
+        async saveState() {
+          localStorage.setItem('ritual_despertar_casa_backup', JSON.stringify({
+            primeiraFaisca: this.primeiraFaisca,
+            cicloEscolhido: this.cicloEscolhido,
+            estadoDesejado: this.estadoDesejado
+          }));
+
+          try {
+            await db.collection("modo_casa").doc("ritual_despertar_casa").set({
+              primeiraFaisca: this.primeiraFaisca,
+              cicloEscolhido: this.cicloEscolhido,
+              estadoDesejado: this.estadoDesejado,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+          } catch(e) {}
+        }
+      }
+    }
+  </script>
+</body>
+</html>
